@@ -224,7 +224,7 @@ class UpdateService:
             )
             return UpdateResult(reply=Reply(text=text))
 
-        text, attachments = self._format_for_max(result.text, result.sources)
+        text, attachments = self._format_for_max(result.text)
         await repo.add_llm_run(
             session,
             conversation_id=conversation.id,
@@ -351,27 +351,13 @@ class UpdateService:
         ]
 
     @staticmethod
-    def _ensure_source(text: str, sources: list[dict[str, object]]) -> str:
-        if not sources or "Источник" in text:
-            result = text
-        else:
-            sections: list[str] = []
-            for source in sources[:2]:
-                section = str(source.get("section") or "").strip()
-                endpoint = str(source.get("endpoint") or "").strip()
-                label = f"{section} ({endpoint})" if endpoint else section
-                if label and label not in sections:
-                    sections.append(label)
-            suffix = "\n\nИсточник: " + "; ".join(sections) if sections else ""
-            result = text + suffix
-        if len(result) > MAX_REPLY_CHARS:
-            result = result[: MAX_REPLY_CHARS - 1].rstrip() + "…"
-        return result
+    def _truncate_reply(text: str) -> str:
+        if len(text) > MAX_REPLY_CHARS:
+            return text[: MAX_REPLY_CHARS - 1].rstrip() + "…"
+        return text
 
     @classmethod
-    def _format_for_max(
-        cls, text: str, sources: list[dict[str, object]]
-    ) -> tuple[str, list[dict[str, str]]]:
+    def _format_for_max(cls, text: str) -> tuple[str, list[dict[str, str]]]:
         attachments: list[dict[str, str]] = []
         normalized = _strip_markdown_lists(text)
 
@@ -395,7 +381,7 @@ class UpdateService:
 
         normalized = CODE_BLOCK_RE.sub(replace_code, normalized)
         normalized = re.sub(r"\n{3,}", "\n\n", normalized).strip()
-        return cls._ensure_source(normalized, sources), attachments
+        return cls._truncate_reply(normalized), attachments
 
 
 CODE_BLOCK_RE = re.compile(r"```([a-zA-Z0-9_+-]*)\n([\s\S]*?)```")

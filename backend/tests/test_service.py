@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.app.config import Settings
 from backend.app.db.models import KnowledgeVersion, LLMRun, Message
-from backend.app.orchestrator.service import UpdateService
+from backend.app.orchestrator.service import MAX_REPLY_CHARS, UpdateService
 
 
 @dataclass
@@ -179,9 +179,7 @@ async def test_clear_creates_new_conversation_for_next_message(
 
 def test_format_for_max_removes_lists_and_moves_code_to_attachment() -> None:
     text = 'Параметры:\n- text — поиск\n1. page — страница\n```json\n{\n  "page": 0\n}\n```\n'
-    formatted, attachments = UpdateService._format_for_max(
-        text, [{"section": "get-vacancies", "endpoint": "GET /vacancies"}]
-    )
+    formatted, attachments = UpdateService._format_for_max(text)
     assert "text — поиск" in formatted
     assert "page — страница" in formatted
     assert "- text" not in formatted
@@ -189,4 +187,28 @@ def test_format_for_max_removes_lists_and_moves_code_to_attachment() -> None:
     assert "example-1.json" in formatted
     assert attachments[0]["filename"] == "example-1.json"
     assert attachments[0]["content"] == '{\n  "page": 0\n}'
-    assert "Источник" in formatted
+    assert "Источник" not in formatted
+
+
+def test_format_for_max_truncates_long_reply() -> None:
+    formatted, _ = UpdateService._format_for_max("x" * (MAX_REPLY_CHARS + 100))
+
+    assert len(formatted) == MAX_REPLY_CHARS
+    assert formatted.endswith("…")
+
+
+@pytest.mark.asyncio
+async def test_reply_omits_sources_but_llm_run_keeps_them(
+    db_session: AsyncSession,
+    service: tuple[UpdateService, CountingFactory],
+) -> None:
+    update_service, _ = service
+    key, payload = make_payload("message_created:6:mid-6")
+
+    result = await update_service.process(db_session, update_key=key, payload=payload)
+
+    assert result.reply is not None
+    assert "Источник" not in result.reply.text
+    run = await db_session.scalar(select(LLMRun))
+    assert run is not None
+    assert run.retrieved_chunks[0]["section"] == "get-vacancies"
