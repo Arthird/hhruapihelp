@@ -81,6 +81,33 @@ MAX API  ◄── long polling ──  max-bot (TypeScript)
 `max-bot` при старте сам подключается к MAX через long polling. Сообщения из MAX начнут
 обрабатываться после того, как backend станет healthy и будет построен индекс знаний.
 
+## Демонстрационный сценарий
+
+1. Отправьте боту в MAX вопрос: `Как получить список вакансий?`.
+2. Бот должен найти раздел `GET /vacancies`, ответить кратко, указать источник и не
+   выдумывать отсутствующие параметры.
+3. Если в ответе есть многострочный пример, он приходит отдельным файлом-вложением, а не
+   fenced-блоком.
+4. Повторите тот же update или перезапустите backend: повторного вызова модели быть не
+   должно, а после подтверждения доставки повторный ответ не отправляется.
+5. Отправьте `/clear` и затем новый вопрос: старый контекст не должен влиять на ответ.
+
+Проверка через внутренний API без MAX:
+
+```bash
+curl -sS -X POST http://127.0.0.1:8000/internal/v1/updates \
+  -H "Authorization: Bearer $INTERNAL_API_TOKEN" \
+  -H 'Content-Type: application/json' \
+  -H 'Idempotency-Key: demo:1:message-1' \
+  -d '{
+    "update_type": "message_created",
+    "update_timestamp": 1760000000000,
+    "chat": {"id": 1, "type": "dialog", "title": null},
+    "user": {"id": 2, "first_name": "Demo", "is_bot": false},
+    "message": {"id": "message-1", "text": "Как получить список вакансий?", "timestamp": 1760000000000}
+  }'
+```
+
 ## Переменные `.env`
 
 Все секреты и настройки передаются через `.env` в корне проекта. Файл `.env` не коммитится;
@@ -240,6 +267,16 @@ npm run build
 ```bash
 docker compose config --quiet
 ```
+
+Результаты финальной проверки:
+
+- backend-тесты: 13/13, `ruff check` и `ruff format --check` проходят;
+- TypeScript: 8/8 тестов, `typecheck`, `lint` и `build` проходят;
+- `smoke_llm`: tool calling доступен, embedding-размерность 256;
+- RAG-ответ на вопрос о вакансиях содержит источник `get-vacancies` и JSON-вложения;
+- `alembic upgrade head` проверен на отдельной пустой БД PostgreSQL 17 с pgvector;
+- сервисы `db`, `backend` и `max-bot` запускаются через `docker compose` и проходят
+  healthcheck.
 
 ## Структура репозитория
 
