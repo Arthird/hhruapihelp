@@ -19,18 +19,20 @@ depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
-    op.drop_constraint("uq_knowledge_source_model", "knowledge_versions", type_="unique")
-    op.create_index(
-        "ix_knowledge_versions_source_model",
-        "knowledge_versions",
-        ["source_sha256", "embedding_model"],
+    op.execute(
+        "ALTER TABLE knowledge_versions "
+        "DROP CONSTRAINT IF EXISTS uq_knowledge_source_model"
+    )
+    op.execute(
+        "CREATE INDEX IF NOT EXISTS ix_knowledge_versions_source_model "
+        "ON knowledge_versions (source_sha256, embedding_model)"
     )
 
 
 def downgrade() -> None:
-    op.drop_index("ix_knowledge_versions_source_model", table_name="knowledge_versions")
-    op.create_unique_constraint(
-        "uq_knowledge_source_model",
-        "knowledge_versions",
-        ["source_sha256", "embedding_model"],
+    op.execute("DROP INDEX IF EXISTS ix_knowledge_versions_source_model")
+    op.execute(
+        "ALTER TABLE knowledge_versions "
+        "ADD CONSTRAINT uq_knowledge_source_model "
+        "UNIQUE (source_sha256, embedding_model)"
     )
