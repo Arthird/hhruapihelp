@@ -78,7 +78,7 @@ MAX API  ◄── long polling ──  max-bot (TypeScript)
    ```bash
    curl -s http://127.0.0.1:8000/health
    docker compose ps
-   docker compose logs -f max-bot
+   docker compose logs
    ```
 
 `max-bot` при старте сам подключается к MAX через long polling. Сообщения из MAX начнут
@@ -131,35 +131,35 @@ curl -sS -X POST http://127.0.0.1:8000/internal/v1/updates \
 инструмент `search_hh_docs`, и без этой возможности ответы будут неполными. Проверка
 выполняется командой `python -m backend.scripts.smoke_llm`.
 
-| Переменная | Обязательна | Назначение | Пример |
-|---|---:|---|---|
-| `MAX_BOT_API_KEY` | да | Токен бота MAX из бизнес-кабинета. | `1234567890:AA...` |
-| `MAX_API_BASE_URL` | да | Базовый URL MAX Bot API. Разрешён только актуальный `platform-api2`. | `https://platform-api2.max.ru` |
-| `MAX_ROOT_CA_PATH` | да | Путь к корневому CA Минцифры внутри контейнера `max-bot`. | `/app/certs/russian_trusted_root_ca.pem` |
-| `BACKEND_BASE_URL` | да | Адрес backend для `max-bot`; в compose переопределяется на `http://backend:8000`. | `http://backend:8000` |
-| `INTERNAL_API_TOKEN` | да | Длинный случайный токен для запросов `max-bot → backend`. | `change-me-long-random-value` |
-| `BACKEND_TIMEOUT_SECONDS` | нет | Таймаут вызова backend, секунды. | `60` |
-| `POSTGRES_DB` | да | Имя базы данных. | `hh_api_help` |
-| `POSTGRES_USER` | да | Пользователь PostgreSQL. | `hh_api_help` |
-| `POSTGRES_PASSWORD` | да | Пароль PostgreSQL. | `change-me` |
-| `POSTGRES_HOST` | да | Хост PostgreSQL; в compose переопределяется на `db`. | `db` |
-| `POSTGRES_PORT` | да | Порт PostgreSQL. | `5432` |
-| `DATABASE_URL` | да* | Async SQLAlchemy URL. В compose собирается из `POSTGRES_*`. | `postgresql+asyncpg://hh_api_help:change-me@db:5432/hh_api_help` |
-| `YANDEX_CLOUD_API_KEY` | да | API-ключ Yandex Cloud с доступом к Assistant и embeddings. | `AQVN...` |
-| `YANDEX_CLOUD_BASE_URL` | да | OpenAI-совместимый endpoint Yandex Assistant. | `https://ai.api.cloud.yandex.net/v1` |
-| `YANDEX_CLOUD_FOLDER` | да | Идентификатор каталога Yandex Cloud. | `b1g...` |
-| `MODEL_NAME` | да | URI модели в формате Yandex, поддерживающей tool calling. | `gpt://b1g.../yandexgpt/latest` |
-| `EMBEDDING_MODEL_NAME` | да | Модель эмбеддингов для документов. Для запросов автоматически используется `text-search-query`. | `text-search-doc` |
-| `EMBEDDING_DIM` | да | Размерность эмбеддингов. Для `text-search-doc/query` — `256`. | `256` |
-| `EMBEDDING_API_BASE` | нет | OpenAI-совместимый endpoint, если используется не Yandex-модель эмбеддингов. | `https://ai.api.cloud.yandex.net/v1` |
-| `KNOWLEDGE_PATH` | нет | Путь к рабочей копии документации для индексации. | `backend/data/hh_api.md` |
-| `KNOWLEDGE_SOURCE_PATH` | нет | Исходный подготовленный файл, который копируется перед индексацией. | `doc_preparing/output/openapi.md` |
-| `PROMPT_PATH` | нет | Начальный системный промпт. | `prompts/initial.md` |
-| `RAG_TOP_K` | нет | Сколько чанков передавать модели. | `5` |
-| `RAG_CHUNK_SIZE` | нет | Максимальный размер чанка в символах. | `1200` |
-| `RAG_CHUNK_OVERLAP` | нет | Перекрытие соседних чанков. | `150` |
-| `PGVECTOR_ENABLED` | нет | Создавать ли таблицы pgvector автоматически. | `true` |
-| `LOG_LEVEL` | нет | Уровень структурированных логов. | `INFO` |
+| Переменная                | Обязательна | Назначение                                                                                      | Пример                                                           |
+| ------------------------- | ----------: | ----------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| `MAX_BOT_API_KEY`         |          да | Токен бота MAX из бизнес-кабинета.                                                              | `1234567890:AA...`                                               |
+| `MAX_API_BASE_URL`        |          да | Базовый URL MAX Bot API. Разрешён только актуальный `platform-api2`.                            | `https://platform-api2.max.ru`                                   |
+| `MAX_ROOT_CA_PATH`        |          да | Путь к корневому CA Минцифры внутри контейнера `max-bot`.                                       | `/app/certs/russian_trusted_root_ca.pem`                         |
+| `BACKEND_BASE_URL`        |          да | Адрес backend для `max-bot`; в compose переопределяется на `http://backend:8000`.               | `http://backend:8000`                                            |
+| `INTERNAL_API_TOKEN`      |          да | Длинный случайный токен для запросов `max-bot → backend`.                                       | `change-me-long-random-value`                                    |
+| `BACKEND_TIMEOUT_SECONDS` |         нет | Таймаут вызова backend, секунды.                                                                | `60`                                                             |
+| `POSTGRES_DB`             |          да | Имя базы данных.                                                                                | `hh_api_help`                                                    |
+| `POSTGRES_USER`           |          да | Пользователь PostgreSQL.                                                                        | `hh_api_help`                                                    |
+| `POSTGRES_PASSWORD`       |          да | Пароль PostgreSQL.                                                                              | `change-me`                                                      |
+| `POSTGRES_HOST`           |          да | Хост PostgreSQL; в compose переопределяется на `db`.                                            | `db`                                                             |
+| `POSTGRES_PORT`           |          да | Порт PostgreSQL.                                                                                | `5432`                                                           |
+| `DATABASE_URL`            |         да* | Async SQLAlchemy URL. В compose собирается из `POSTGRES_*`.                                     | `postgresql+asyncpg://hh_api_help:change-me@db:5432/hh_api_help` |
+| `YANDEX_CLOUD_API_KEY`    |          да | API-ключ Yandex Cloud с доступом к Assistant и embeddings.                                      | `AQVN...`                                                        |
+| `YANDEX_CLOUD_BASE_URL`   |          да | OpenAI-совместимый endpoint Yandex Assistant.                                                   | `https://ai.api.cloud.yandex.net/v1`                             |
+| `YANDEX_CLOUD_FOLDER`     |          да | Идентификатор каталога Yandex Cloud.                                                            | `b1g...`                                                         |
+| `MODEL_NAME`              |          да | URI модели в формате Yandex, поддерживающей tool calling.                                       | `gpt://b1g.../yandexgpt/latest`                                  |
+| `EMBEDDING_MODEL_NAME`    |          да | Модель эмбеддингов для документов. Для запросов автоматически используется `text-search-query`. | `text-search-doc`                                                |
+| `EMBEDDING_DIM`           |          да | Размерность эмбеддингов. Для `text-search-doc/query` — `256`.                                   | `256`                                                            |
+| `EMBEDDING_API_BASE`      |         нет | OpenAI-совместимый endpoint, если используется не Yandex-модель эмбеддингов.                    | `https://ai.api.cloud.yandex.net/v1`                             |
+| `KNOWLEDGE_PATH`          |         нет | Путь к рабочей копии документации для индексации.                                               | `backend/data/hh_api.md`                                         |
+| `KNOWLEDGE_SOURCE_PATH`   |         нет | Исходный подготовленный файл, который копируется перед индексацией.                             | `doc_preparing/output/openapi.md`                                |
+| `PROMPT_PATH`             |         нет | Начальный системный промпт.                                                                     | `prompts/initial.md`                                             |
+| `RAG_TOP_K`               |         нет | Сколько чанков передавать модели.                                                               | `5`                                                              |
+| `RAG_CHUNK_SIZE`          |         нет | Максимальный размер чанка в символах.                                                           | `1200`                                                           |
+| `RAG_CHUNK_OVERLAP`       |         нет | Перекрытие соседних чанков.                                                                     | `150`                                                            |
+| `PGVECTOR_ENABLED`        |         нет | Создавать ли таблицы pgvector автоматически.                                                    | `true`                                                           |
+| `LOG_LEVEL`               |         нет | Уровень структурированных логов.                                                                | `INFO`                                                           |
 
 \* `DATABASE_URL` можно не задавать, если заполнены `POSTGRES_*`; код соберёт URL сам.
 Если `DATABASE_URL` задан, он имеет приоритет.
