@@ -42,38 +42,44 @@ MAX API  ◄── long polling ──  max-bot (TypeScript)
 
 ## Быстрый запуск
 
-1. Скопируйте пример окружения и заполните секреты:
+1. Клонируйте репозиторий на свой компьютер:
+
+   ```bash
+   git clone https://github.com/Arthird/hhruapihelp.git
+   ```
+
+2. Скопируйте пример окружения и заполните секреты:
 
    ```bash
    cp .env.example .env
    ```
 
-2. Соберите и запустите сервисы:
+3. Соберите и запустите сервисы:
 
    ```bash
    docker compose up --build -d
    ```
 
-3. Примените миграции (backend делает это автоматически при старте, но команда полезна для
+4. Примените миграции (backend делает это автоматически при старте, но команда полезна для
    ручной проверки):
 
    ```bash
    docker compose exec backend alembic -c /app/backend/alembic.ini upgrade head
    ```
 
-4. Проверьте модель и эмбеддинги (модель должна поддерживать tool calling):
+5. Проверьте модель и эмбеддинги (модель должна поддерживать tool calling):
 
    ```bash
    docker compose exec backend python -m backend.scripts.smoke_llm
    ```
 
-5. Постройте индекс документации:
+6. Постройте индекс документации:
 
    ```bash
    docker compose exec backend python -m backend.scripts.sync_knowledge
    ```
 
-6. Проверьте состояние:
+7. Проверьте состояние:
 
    ```bash
    curl -s http://127.0.0.1:8000/health
